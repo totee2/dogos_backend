@@ -55,18 +55,16 @@ def closest_dogs(dog_id):
 
     if not has_been_loaded:
         load_features()
-    if dog_id < db.dogos.count():
-        response = db.dogos.find_one({"query": dog_id})
-        if response is None:
-            # dogo = images[dog_id: dog_id + 1]
-            # neighbours = query_model(dogo, model, images)
-            # resp = flask.Response(make_json(dogo.append(neighbours)))
-            resp = flask.Response(starter_dogs())
-        else:
-            resp = flask.Response(json.dumps(response['response']))
 
+    response = db.dogos.find_one({"query": dog_id})
+    if response is None:
+        # dogo = images[dog_id: dog_id + 1]
+        # neighbours = query_model(dogo, model, images)
+        # resp = flask.Response(make_json(dogo.append(neighbours)))
+        resp = flask.Response(starter_dogs())
     else:
-        resp = flask.Response(json.dumps({'Warning': 'Stop fiddling around in my backend!!'}))
+        resp = flask.Response(json.dumps(response['response']))
+
     resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 
