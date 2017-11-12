@@ -1,15 +1,17 @@
 import flask
-from flask import Flask, request, send_from_directory
+from flask import Flask, send_from_directory
 import graphlab
 import random
-from graphlab import SFrame, SArray
+from graphlab import SFrame
 import json
+from pymongo import MongoClient
 app = Flask(__name__)
 
 path = ''
 
 model = None
 images = None
+db = None
 has_been_loaded = False
 
 
@@ -54,11 +56,20 @@ def make_json(dog_data):
 
 @app.route('/find_your_dog/<int:dog_id>')
 def closest_dogs(dog_id):
+
     if not has_been_loaded:
         load_features()
-    dogo = images[dog_id: dog_id+1]
-    neighbours = query_model(dogo, model, images)
-    resp = flask.Response(make_json(dogo.append(neighbours)))
+    if dog_id < len(images):
+        response = db.dogos.find_one({"query": dog_id})
+        if response is None:
+            dogo = images[dog_id: dog_id + 1]
+            neighbours = query_model(dogo, model, images)
+            resp = flask.Response(make_json(dogo.append(neighbours)))
+        else:
+            resp = flask.Response(json.dumps(response['response']))
+
+    else:
+        resp = flask.Response(json.dumps({'Warning': 'Stop fiddling around in my backend!!'}))
     resp.headers['Access-Control-Allow-Origin'] = '*'
     return resp
 
@@ -77,6 +88,7 @@ def starter_dogs():
 
     return make_json(dog_data)
 
+
 @app.route("/")
 def hello():
     return "<h1 style='color:blue'>Hello There!</h1>"
@@ -86,13 +98,16 @@ def hello():
 def serv_file(file=None):
     return send_from_directory('full', file)
 
+
 def load_features():
-    global images, model, has_been_loaded
+    global images, model, db, has_been_loaded
 
     print 'Loading features'
 
     images = graphlab.load_sframe(path + 'my_images')
     model = graphlab.load_model(path + 'my_model')
+    client = MongoClient("localhost")
+    db = client.dogos
     has_been_loaded = True
 
 
