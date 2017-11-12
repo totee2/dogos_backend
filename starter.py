@@ -41,15 +41,11 @@ def query_model(dogo, model, images):
 
 def make_json(dog_data):
     dog_json = {}
-    for i in range(0, len(dog_data)):
-        dog_info = {}
-        dog_info['id'] = dog_data[i]['id']
-        dog_info['image_filename'] = dog_data[i]['image_filename']
-        dog_info['name'] = dog_data[i]['name']
-        dog_info['url'] = dog_data[i]['url']
-        dog_json['dog' + str(i)] = dog_info
-    # print dog_data
-    # print dog_json
+    counter = 0
+    for dog in dog_data:
+        dog_info = dog['response']['dog0']
+        dog_json['dog' + str(counter)] = dog_info
+        counter += 1
 
     return json.dumps(dog_json)
 
@@ -59,12 +55,13 @@ def closest_dogs(dog_id):
 
     if not has_been_loaded:
         load_features()
-    if dog_id < len(images):
+    if dog_id < db.dogos.count():
         response = db.dogos.find_one({"query": dog_id})
         if response is None:
-            dogo = images[dog_id: dog_id + 1]
-            neighbours = query_model(dogo, model, images)
-            resp = flask.Response(make_json(dogo.append(neighbours)))
+            # dogo = images[dog_id: dog_id + 1]
+            # neighbours = query_model(dogo, model, images)
+            # resp = flask.Response(make_json(dogo.append(neighbours)))
+            resp = flask.Response(starter_dogs())
         else:
             resp = flask.Response(json.dumps(response['response']))
 
@@ -79,13 +76,9 @@ def starter_dogs():
 
     if not has_been_loaded:
         load_features()
-
-    num_dogs = len(images)
-
+    num_dogs = db.dogos.count()
     dog_numbers = random.sample(xrange(num_dogs), 6)
-
-    dog_data = images.filter_by(dog_numbers, 'id')
-
+    dog_data = db.dogos.find({'query': {'$in': dog_numbers}})
     return make_json(dog_data)
 
 
@@ -104,8 +97,8 @@ def load_features():
 
     print 'Loading features'
 
-    images = graphlab.load_sframe(path + 'my_images')
-    model = graphlab.load_model(path + 'my_model')
+    # images = graphlab.load_sframe(path + 'my_images')
+    # model = graphlab.load_model(path + 'my_model')
     client = MongoClient("localhost")
     db = client.dogos
     has_been_loaded = True
