@@ -77,7 +77,9 @@ def starter_dogs():
     num_dogs = db.dogos.count()
     dog_numbers = random.sample(xrange(num_dogs), 6)
     dog_data = db.dogos.find({'query': {'$in': dog_numbers}})
-    return make_json(dog_data)
+    resp = flask.Response(make_json(dog_data))
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
 
 
 @app.route("/")
