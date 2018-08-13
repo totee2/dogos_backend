@@ -10,9 +10,16 @@ app = Flask(__name__)
 path = ''
 
 model = None
+model_cat = None
+
 images = None
+images_cat = None
+
 db = None
+db_cat = None
+
 has_been_loaded = False
+has_been_loaded_cat = False
 
 
 def get_images_from_ids(query_result, images):
@@ -69,6 +76,25 @@ def closest_dogs(dog_id):
     return resp
 
 
+@app.route('/find_your_cat/<int:cat_id>')
+def closest_cats(cat_id):
+
+    if not has_been_loaded_cat:
+        load_features_cat()
+
+    response = db.gatos.find_one({"query": cat_id})
+    if response is None:
+        # dogo = images[dog_id: dog_id + 1]
+        # neighbours = query_model(dogo, model, images)
+        # resp = flask.Response(make_json(dogo.append(neighbours)))
+        resp = flask.Response(starter_cats())
+    else:
+        resp = flask.Response(json.dumps(response['response']))
+
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+
 @app.route('/find_your_dog/start')
 def starter_dogs():
 
@@ -82,6 +108,19 @@ def starter_dogs():
     return resp
 
 
+@app.route('/find_your_cat/start')
+def starter_cats():
+
+    if not has_been_loaded_cat:
+        load_features_cat()
+    num_cats = db.gatos.count()
+    cat_numbers = random.sample(xrange(num_cats), 6)
+    cat_data = db.gatos.find({'query': {'$in': cat_numbers}})
+    resp = flask.Response(make_json(cat_data))
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
+
+
 @app.route("/")
 def hello():
     return "<h1 style='color:blue'>Hello There!</h1>"
@@ -89,7 +128,12 @@ def hello():
 
 @app.route("/full/<file>")
 def serv_file(file=None):
-    return send_from_directory('full', file)
+    return send_from_directory('images_stable', file)
+
+
+@app.route("/gato/full/<file>")
+def serv_file(file=None):
+    return send_from_directory('/home/dogo/gato/images_stable/full', file)
 
 
 def load_features():
@@ -102,6 +146,18 @@ def load_features():
     client = MongoClient("localhost")
     db = client.dogos
     has_been_loaded = True
+
+
+def load_features_cat():
+    global images_cat, model_cat, db_cat, has_been_loaded_cat
+
+    print 'Loading features for the cats'
+
+    # images = graphlab.load_sframe(path + 'my_images')
+    # model = graphlab.load_model(path + 'my_model')
+    client = MongoClient("localhost")
+    db_cat = client.gatos
+    has_been_loaded_cat = True
 
 
 if __name__ == "__main__":
