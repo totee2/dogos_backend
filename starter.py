@@ -132,7 +132,7 @@ def serv_file(file=None):
 
 
 @app.route("/gato/full/<file>")
-def serv_file(file=None):
+def serv_file_gato(file=None):
     return send_from_directory('/home/dogo/gato/images_stable/full', file)
 
 
